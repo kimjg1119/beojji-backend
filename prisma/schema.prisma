@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -45,7 +45,7 @@ model Problem {
   title       String
   description String
   link        String
-  readme      String?      @db.Text
+  readme      String?      
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   classes     ClassProblem[]

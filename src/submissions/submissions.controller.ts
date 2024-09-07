@@ -8,7 +8,7 @@ export class SubmissionsController {
   constructor(private submissionsService: SubmissionsService) {}
 
   @Post()
-  async createSubmission(@Req() req, @Body() submissionData: { problemId: number; code: string }) {
+  async createSubmission(@Req() req, @Body() submissionData: { classProblemId: number; code: string }) {
     const userId = req.user.userId;
     return this.submissionsService.createSubmission({ ...submissionData, userId });
   }
@@ -16,6 +16,6 @@ export class SubmissionsController {
   @Get('my')
   async getMySubmissions(@Req() req) {
     const userId = req.user.userId;
-    return this.submissionsService.getSubmissionsByUser(userId);
+    return this.submissionsService.getSubmissionsForUser(userId);
   }
 }

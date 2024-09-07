@@ -5,46 +5,61 @@ import { PrismaService } from '../prisma/prisma.service';
 export class SubmissionsService {
   constructor(private prisma: PrismaService) {}
 
-  async createSubmission(submissionData: { userId: number; problemId: number; code: string }) {
-    const { userId, problemId, code } = submissionData;
+  async createSubmission(submissionData: { userId: number; classProblemId: number; code: string }) {
+    const { userId, classProblemId, code } = submissionData;
 
-    // Check if the problem exists
-    const problem = await this.prisma.problem.findUnique({ where: { id: problemId } });
-    if (!problem) {
-      throw new NotFoundException(`Problem with ID ${problemId} not found`);
+    // Check if the classProblem exists
+    const classProblem = await this.prisma.classProblem.findUnique({
+      where: { id: classProblemId },
+      include: { problem: true },
+    });
+
+    if (!classProblem) {
+      throw new NotFoundException(`ClassProblem with ID ${classProblemId} not found`);
     }
 
     // Create the submission
     const submission = await this.prisma.submission.create({
       data: {
         user: { connect: { id: userId } },
-        problem: { connect: { id: problemId } },
+        classProblem: { connect: { id: classProblemId } },
         code,
-        status: 'PENDING', // You might want to implement a judge system to evaluate submissions
+        status: 'pending', // You might want to implement a judge system to update this status
+      },
+      include: {
+        classProblem: {
+          include: {
+            problem: true,
+          },
+        },
       },
     });
 
     return submission;
   }
 
-  async getSubmissionsByUser(userId: number) {
+  async getSubmissionsForUser(userId: number) {
     const submissions = await this.prisma.submission.findMany({
       where: { userId },
       include: {
-        problem: {
-          select: { title: true }
-        }
+        classProblem: {
+          include: {
+            problem: true,
+            class: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     return submissions.map(submission => ({
       id: submission.id,
-      problemId: submission.problemId,
-      problemTitle: submission.problem.title,
+      problemId: submission.classProblem.problem.id,
+      problemTitle: submission.classProblem.problem.title,
+      className: submission.classProblem.class.name,
       code: submission.code,
       status: submission.status,
-      createdAt: submission.createdAt
+      createdAt: submission.createdAt,
     }));
   }
 }

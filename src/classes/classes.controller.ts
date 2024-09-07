@@ -1,32 +1,34 @@
-import { Controller, Get, Post, Body, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { ClassesService } from './classes.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
-import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('api/classes')
+@UseGuards(JwtAuthGuard)
 export class ClassesController {
-  private readonly logger = new Logger(ClassesController.name);
-
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly classesService: ClassesService) {}
 
   @Get()
-  async getAllClasses() {
-    const classes = await this.prisma.class.findMany({
-      select: { id: true, name: true },
-    });
-    return classes;
+  findAll() {
+    return this.classesService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.classesService.findOne(+id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  async addClass(@Body() data: { name: string }) {
-    this.logger.debug(`Adding new class: ${data.name}`);
-    const newClass = await this.prisma.class.create({
+  @UseGuards(AdminGuard)
+  create(@Body() createClassDto: { name: string; courseId: string; term: string; description: string; link: string }) {
+    return this.classesService.create({
       data: {
-        name: data.name,
+        name: createClassDto.name,
+        courseId: createClassDto.courseId,
+        term: createClassDto.term,
+        description: createClassDto.description,
+        link: createClassDto.link,
       },
     });
-    this.logger.debug(`Class added successfully: ${newClass.id}`);
-    return newClass;
   }
 }

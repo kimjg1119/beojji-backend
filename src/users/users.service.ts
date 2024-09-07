@@ -59,7 +59,11 @@ export class UsersService {
       include: {
         classes: {
           include: {
-            problems: true // Include problems for each class
+            problems: {
+              include: {
+                problem: true
+              }
+            }
           }
         }
       },
@@ -69,6 +73,13 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user.classes;
+    return user.classes.map(cls => ({
+      ...cls,
+      problems: cls.problems.map(cp => ({
+        id: cp.id,
+        problem: cp.problem,
+        dueDate: cp.dueDate
+      }))
+    }));
   }
 }

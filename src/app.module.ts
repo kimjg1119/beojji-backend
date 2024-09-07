@@ -6,17 +6,17 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ClassesModule } from './classes/classes.module';
-import { ProblemsModule } from './problems/problems.module';
+import { ProblemModule } from './problem/problem.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 
 @Module({
   imports: [
+    ClassesModule,
     EnrollmentModule,
     PrismaModule,
     UsersModule,
     AuthModule,
-    ClassesModule,
-    ProblemsModule,
+    ProblemModule,
     SubmissionsModule
   ],
   controllers: [AppController],

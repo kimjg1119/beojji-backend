@@ -6,23 +6,6 @@ import axios from 'axios';
 export class ProblemService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createProblem(problemData: { 
-    title: string; 
-    description: string; 
-    link: string; 
-    classIds: number[] 
-  }) {
-    const { title, description, link, classIds } = problemData;
-
-    const problem = await this.prisma.problem.create({
-      data: {
-        title,
-        description,
-        link,
-      },
-    });
-  }
-
   async getProblem(id: number) {
     const classProblem = await this.prisma.classProblem.findUnique({
       where: { id },

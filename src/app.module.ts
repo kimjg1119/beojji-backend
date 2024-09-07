@@ -8,6 +8,9 @@ import { AuthModule } from './auth/auth.module';
 import { ClassesModule } from './classes/classes.module';
 import { ProblemModule } from './problem/problem.module';
 import { SubmissionsModule } from './submissions/submissions.module';
+import { AdminModule } from './admin/admin.module';
+import { AdminGuard } from './auth/admin.guard';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -17,9 +20,11 @@ import { SubmissionsModule } from './submissions/submissions.module';
     UsersModule,
     AuthModule,
     ProblemModule,
-    SubmissionsModule
+    SubmissionsModule,
+    AdminModule,
+    ActivityModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AdminGuard],
 })
 export class AppModule {}

@@ -24,6 +24,7 @@ model User {
   role        String       @default("user")
   classes     Class[]      @relation("UserClass")
   submissions Submission[]
+  activities Activity[]
 }
 
 model Class {
@@ -72,8 +73,18 @@ model Submission {
   classProblemId  Int
   code            String
   status          String
+  score           Int           @default(0)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   @@index([userId, classProblemId])
+}
+
+model Activity {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  content   String
+  createdAt DateTime @default(now())
 }

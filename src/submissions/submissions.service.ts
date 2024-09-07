@@ -1,65 +1,57 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ActivityService } from '../activity/activity.service';
 
 @Injectable()
 export class SubmissionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private activityService: ActivityService
+  ) {}
 
-  async createSubmission(submissionData: { userId: number; classProblemId: number; code: string }) {
-    const { userId, classProblemId, code } = submissionData;
-
-    // Check if the classProblem exists
-    const classProblem = await this.prisma.classProblem.findUnique({
-      where: { id: classProblemId },
-      include: { problem: true },
-    });
-
-    if (!classProblem) {
-      throw new NotFoundException(`ClassProblem with ID ${classProblemId} not found`);
-    }
-
-    // Create the submission
+  async createSubmission(userId: number, classProblemId: number, code: string) {
     const submission = await this.prisma.submission.create({
       data: {
-        user: { connect: { id: userId } },
-        classProblem: { connect: { id: classProblemId } },
+        userId,
+        classProblemId,
         code,
-        status: 'pending', // You might want to implement a judge system to update this status
-      },
-      include: {
-        classProblem: {
-          include: {
-            problem: true,
-          },
-        },
+        status: 'PENDING',
       },
     });
+
+    // Create activity for the submission
+    await this.activityService.createActivity(
+      userId,
+      'SUBMISSION',
+      `Submitted a solution for problem #${classProblemId}`
+    );
 
     return submission;
   }
 
-  async getSubmissionsForUser(userId: number) {
-    const submissions = await this.prisma.submission.findMany({
+  async getMySubmissions(userId: number) {
+    return this.prisma.submission.findMany({
       where: { userId },
       include: {
         classProblem: {
           include: {
-            problem: true,
-            class: true,
+            problem: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+            class: {
+              select: {
+                id: true,
+                name: true,
+                courseId: true,
+              },
+            },
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
-
-    return submissions.map(submission => ({
-      id: submission.id,
-      problemId: submission.classProblem.problem.id,
-      problemTitle: submission.classProblem.problem.title,
-      className: submission.classProblem.class.name,
-      code: submission.code,
-      status: submission.status,
-      createdAt: submission.createdAt,
-    }));
   }
 }

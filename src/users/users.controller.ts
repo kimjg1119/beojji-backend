@@ -1,7 +1,7 @@
 import { Controller, Post, Body, BadRequestException, Logger, Get, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { PrismaService } from '../prisma/prisma.service';
+import { RequestWithUser, UserData, UserProfile } from '../types/types';
 
 @Controller('api/users')
 export class UsersController {
@@ -15,7 +15,7 @@ export class UsersController {
   }
 
   @Post()
-  async createUser(@Body() userData: { name: string; email: string; studentId: string; password: string }) {
+  async createUser(@Body() userData: UserData) {
     this.logger.log(`Attempting to create user with email: ${userData.email}`);
     if (!userData.name || !userData.email || !userData.studentId || !userData.password) {
       this.logger.warn('Registration attempt with missing fields');
@@ -33,7 +33,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getProfile(@Req() req) {
+  async getProfile(@Req() req: RequestWithUser): Promise<UserProfile> {
     this.logger.debug('getProfile called');
     this.logger.debug('User from request:', req.user);
 
@@ -51,7 +51,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me/classes')
-  async getUserClasses(@Req() req) {
+  async getUserClasses(@Req() req: RequestWithUser) {
     const userId = req.user.userId;
     return this.usersService.getUserClasses(userId);
   }

@@ -1,30 +1,34 @@
 import { Module } from '@nestjs/common';
+
+import { ActivityModule } from './api/activity/activity.module';
+import { AdminModule } from './api/admin/admin.module';
+import { ProblemModule } from './api/problem/problem.module';
+import { UserModule } from './api/user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { EnrollmentModule } from './enrollment/enrollment.module';
-import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
-import { ClassesModule } from './classes/classes.module';
-import { ProblemModule } from './problem/problem.module';
-import { SubmissionsModule } from './submissions/submissions.module';
-import { AdminModule } from './admin/admin.module';
-import { AdminGuard } from './auth/admin.guard';
-import { ActivityModule } from './activity/activity.module';
+import { RoleGuard } from './auth/role.guard';
+import { SelfActionGuard } from './auth/self-action.guard';
+import { LoginModule } from './api/login/login.module';
+import { CourseModule } from './api/course/course.module';
+import { SubmissionModule } from './api/submission/submission.module';
 
 @Module({
   imports: [
-    ClassesModule,
-    EnrollmentModule,
-    PrismaModule,
-    UsersModule,
-    AuthModule,
-    ProblemModule,
-    SubmissionsModule,
+    ActivityModule,
     AdminModule,
-    ActivityModule
+    LoginModule,
+    CourseModule,
+    PrismaModule,
+    ProblemModule,
+    SubmissionModule,
+    UserModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AdminGuard],
+  providers: [
+    AppService,
+    RoleGuard,
+    SelfActionGuard,
+  ],
 })
-export class AppModule {}
+export class AppModule { }

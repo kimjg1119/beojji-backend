@@ -16,7 +16,7 @@ async function main() {
     update: {},
     create: {
       email: 'alice@example.com',
-      name: 'Alice',
+      username: 'Alice',
       studentId: '20240001',
       password: await hashPassword('password123'),
       role: 'user',
@@ -28,7 +28,7 @@ async function main() {
     update: {},
     create: {
       email: 'bob@example.com',
-      name: 'Bob',
+      username: 'Bob',
       studentId: '20240002',
       password: await hashPassword('password123'),
       role: 'user',
@@ -40,35 +40,35 @@ async function main() {
     update: {},
     create: {
       email: 'admin@example.com',
-      name: 'Admin',
+      username: 'Admin',
       studentId: '20240003',
       password: await hashPassword('password'),
       role: 'admin',
     },
   })
 
-  // Create example classes
-  const class1 = await prisma.class.create({
+  // Create example courses
+  const course1 = await prisma.course.create({
     data: {
       name: 'Programming Languages',
       courseId: 'COSE212',
       term: 'Fall 2024',
       description: 'Learn the basics of programming languages',
       link: 'https://plrg.korea.ac.kr/courses/cose212/2024_2/',
-      users: {
+      user: {
         connect: [{ id: user1.id }, { id: user2.id }, { id: admin.id }],
       },
     },
   })
 
-  const class2 = await prisma.class.create({
+  const course2 = await prisma.course.create({
     data: {
       name: 'Theory of Computation',
       courseId: 'COSE215',
       term: 'Spring 2024',
       description: 'Learn the basics of theory of computation',
       link: 'https://plrg.korea.ac.kr/courses/cose215/2024_1/',
-      users: {
+      user: {
         connect: [{ id: user1.id }, { id: admin.id }],
       },
     },
@@ -99,26 +99,26 @@ async function main() {
     },
   })
 
-  // Create ClassProblem relationships
-  await prisma.classProblem.createMany({
+  // Create CourseProblem relationships
+  await prisma.courseProblem.createMany({
     data: [
       {
-        classId: class1.id,
+        courseId: course1.id,
         problemId: problem1.id,
         dueDate: new Date('2024-12-31T23:59:59Z'),
       },
       {
-        classId: class1.id,
+        courseId: course1.id,
         problemId: problem2.id,
         dueDate: new Date('2024-12-31T23:59:59Z'),
       },
       {
-        classId: class2.id,
+        courseId: course2.id,
         problemId: problem1.id,
         dueDate: new Date('2024-06-30T23:59:59Z'),
       },
       {
-        classId: class2.id,
+        courseId: course2.id,
         problemId: problem3.id,
         dueDate: new Date('2024-06-30T23:59:59Z'),
       },
@@ -126,9 +126,9 @@ async function main() {
   })
 
   // Fetch and log the created data to verify the structure
-  const classesWithProblems = await prisma.class.findMany({
+  const coursesWithProblems = await prisma.course.findMany({
     include: {
-      problems: {
+      courseProblem: {
         include: {
           problem: true,
         },
@@ -136,7 +136,7 @@ async function main() {
     },
   })
 
-  console.log('Classes with problems:', JSON.stringify(classesWithProblems, null, 2))
+  console.log('Courses with problems:', JSON.stringify(coursesWithProblems, null, 2))
   console.log('Seed data inserted successfully')
 }
 

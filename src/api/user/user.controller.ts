@@ -14,6 +14,8 @@ export class UserController {
   constructor(private readonly usersService: UserService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Role('admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Returns all users' })
@@ -42,15 +44,5 @@ export class UserController {
   @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
   async getProfile(@Req() req: RequestWithUser): Promise<GetProfileDto> {
     return this.usersService.getProfile(req.user.id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me/course')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get the courses of the authenticated user' })
-  @ApiResponse({ status: 200, description: 'Returns the user courses' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
-  async getUserCourse(@Req() req: RequestWithUser) {
-    return this.usersService.getUserCourse(req.user.id);
   }
 }

@@ -21,7 +21,7 @@ export class UserService {
 
   async getAllUser() {
     return this.prisma.user.findMany({
-      select: { id: true, email: true, studentId: true, role: true },
+      select: { id: true, email: true, studentId: true, role: true, username: true },
     });
   }
 

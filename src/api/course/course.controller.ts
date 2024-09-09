@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, UsePipes, ValidationPipe, Req } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -6,6 +6,8 @@ import { EnrollDto } from './dto/enroll.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
 import { Role } from 'src/auth/roles.decorator';
 import { RoleGuard } from 'src/auth/role.guard';
+import { RequestWithUser } from 'src/auth/requests';
+import { SelfActionGuard } from 'src/auth/self-action.guard';
 
 @ApiTags('Course')
 @Controller('api/course')
@@ -19,6 +21,16 @@ export class CourseController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getAll() {
     return this.courseService.getAll();
+  }
+  
+  @Get('me')
+  @UseGuards(JwtAuthGuard, SelfActionGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get the courses of the authenticated user' })
+  @ApiResponse({ status: 200, description: 'Returns the user courses' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
+  async getUserCourse(@Req() req: RequestWithUser) {
+    return this.courseService.getUserCourse(req.user.id);
   }
 
   @Get(':id')
@@ -83,4 +95,6 @@ export class CourseController {
   enroll(@Body() enrollDto: EnrollDto) {
     return this.courseService.enroll(enrollDto);
   }
+
+
 }

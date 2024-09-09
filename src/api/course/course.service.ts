@@ -87,4 +87,36 @@ export class CourseService {
       },
     });
   }
+
+  async getUserCourse(userId: number) {
+    const userWithCourses = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        course: {
+          include: {
+            courseProblem: {
+              select: {
+                id: true,
+                dueDate: true,
+                problem: {
+                  select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    link: true
+                  }
+                },
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!userWithCourses) {
+      throw new NotFoundException('User not found');
+    }
+
+    return userWithCourses.course;
+  }
 }

@@ -18,7 +18,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: 'http://59.5.31.39:3000',
+    origin: 'http://localhost:3000',
     credentials: true,
   });
   app.enableShutdownHooks();

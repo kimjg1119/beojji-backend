@@ -33,7 +33,7 @@ export class SubmissionController {
     return this.submissionService.createSubmission(userId, submissionData);
   }
 
-  @Get('my')
+  @Get('me')
   @UseGuards(SelfActionGuard)
   @ApiOperation({ summary: 'Get current user\'s submissions' })
   @ApiResponse({ status: 200, description: 'Returns a list of user\'s submissions' })

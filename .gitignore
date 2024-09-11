@@ -57,3 +57,14 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # DB
 prisma/dev.db
+
+# Template
+template/
+
+# scala
+.metals/
+.scala-build/
+
+# Dev
+.vscode/
+.bsp/

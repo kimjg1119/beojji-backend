@@ -46,6 +46,7 @@ model Problem {
   description String
   link        String
   readme      String?
+  package     String?
   course      CourseProblem[]
 
   createdAt DateTime @default(now())
@@ -76,6 +77,7 @@ model Submission {
   courseProblemId Int
   code            String
   status          String
+  detail          String?
   score           Int           @default(0)
   user            User          @relation(fields: [userId], references: [id])
   courseProblem   CourseProblem @relation(fields: [courseProblemId], references: [id])

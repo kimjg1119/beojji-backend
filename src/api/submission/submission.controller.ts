@@ -4,6 +4,7 @@ import { SelfActionGuard } from '../../auth/self-action.guard';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { SubmissionService } from './submission.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
+import { GetSubmissionDto } from './dto/get-submission.dto';
 
 @ApiTags('Submission')
 @ApiBearerAuth()
@@ -36,9 +37,9 @@ export class SubmissionController {
   @Get('me')
   @UseGuards(SelfActionGuard)
   @ApiOperation({ summary: 'Get current user\'s submissions' })
-  @ApiResponse({ status: 200, description: 'Returns a list of user\'s submissions' })
+  @ApiResponse({ status: 200, description: 'Returns a list of user\'s submissions', type: [GetSubmissionDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getMySubmissions(@Req() req: RequestWithUser) {
+  async getMySubmissions(@Req() req: RequestWithUser): Promise<GetSubmissionDto[]> {
     const userId = req.user.id;
     return this.submissionService.getMySubmissions(userId);
   }
@@ -47,11 +48,10 @@ export class SubmissionController {
   @UseGuards(SelfActionGuard)
   @ApiOperation({ summary: 'Get a specific submission' })
   @ApiParam({ name: 'id', type: 'string', description: 'Submission ID' })
-  @ApiResponse({ status: 200, description: 'Returns the requested submission' })
+  @ApiResponse({ status: 200, description: 'Returns the requested submission', type: GetSubmissionDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Submission not found' })
-  async getSubmission(@Param('id') id: string, @Req() req: RequestWithUser) {
-    const submission = await this.submissionService.getSubmissionById(parseInt(id, 10));
-    return submission;
+  async getSubmission(@Param('id') id: string, @Req() req: RequestWithUser): Promise<GetSubmissionDto> {
+    return this.submissionService.getSubmissionById(parseInt(id, 10));
   }
 }

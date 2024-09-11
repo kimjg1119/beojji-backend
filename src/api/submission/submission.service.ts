@@ -1,104 +1,110 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
-import { use } from 'passport';
+import { GraderQueue } from '../../grader/grader-queue';
+import { GetSubmissionDto } from './dto/get-submission.dto';
 
 @Injectable()
 export class SubmissionService {
+  private readonly logger = new Logger(SubmissionService.name);
+
   constructor(
     private prisma: PrismaService,
-    private activityService: ActivityService
+    private activityService: ActivityService,
+    private graderQueue: GraderQueue
   ) {}
-
-  private readonly logger = new Logger(SubmissionService.name);
 
   async createSubmission(userId: number, submissionData: { courseProblemId: number; code: string }) {
     const { courseProblemId, code } = submissionData;
-    this.logger.log(`Creating ${userId}'s submission for course problem ${courseProblemId} with code length ${code.length}`);
+    this.logger.log(`Creating submission for user ${userId}, course problem ${courseProblemId}`);
 
+    await this.validateSubmission(courseProblemId);
+
+    const submission = await this.saveSubmission(userId, courseProblemId, code);
+    await this.processSubmission(submission.id, userId, courseProblemId);
+
+    return submission;
+  }
+
+  async getMySubmissions(userId: number): Promise<GetSubmissionDto[]> {
+    const submissions = await this.fetchUserSubmissions(userId);
+    return submissions.map(this.mapSubmissionToDto);
+  }
+
+  async getSubmissionById(id: number): Promise<GetSubmissionDto> {
+    const submission = await this.fetchSubmissionById(id);
+    if (!submission) {
+      throw new NotFoundException(`Submission with ID ${id} not found`);
+    }
+    return this.mapSubmissionToDto(submission);
+  }
+
+  private async validateSubmission(courseProblemId: number): Promise<void> {
     const courseProblem = await this.prisma.courseProblem.findUnique({
       where: { id: courseProblemId },
       select: { dueDate: true },
     });
 
     if (!courseProblem) {
-      throw new Error('Course problem not found');
+      throw new NotFoundException('Course problem not found');
     }
 
-    const currentTime = new Date();
-    const dueDate = new Date(courseProblem.dueDate);
-
-    if (currentTime > dueDate) {
+    if (new Date() > new Date(courseProblem.dueDate)) {
       throw new Error('Submission time has passed the due date');
     }
+  }
 
-    const submission = await this.prisma.submission.create({
-      data: {
-        userId,
-        courseProblemId,
-        code,
-        status: 'PENDING',
-      },
+  private async saveSubmission(userId: number, courseProblemId: number, code: string) {
+    return this.prisma.submission.create({
+      data: { userId, courseProblemId, code, status: 'PENDING' },
     });
+  }
 
-    // Create activity for the submission
+  private async processSubmission(submissionId: number, userId: number, courseProblemId: number): Promise<void> {
+    this.graderQueue.addToQueue(submissionId);
     await this.activityService.createActivity(
       userId,
       'SUBMISSION',
       `Submitted a solution for problem #${courseProblemId}`
     );
-
-    return submission;
   }
 
-  async getMySubmissions(userId: number) {
+  private async fetchUserSubmissions(userId: number) {
     return this.prisma.submission.findMany({
       where: { userId },
-      include: {
-        courseProblem: {
-          include: {
-            problem: {
-              select: {
-                id: true,
-                title: true,
-              },
-            },
-            course: {
-              select: {
-                id: true,
-                name: true,
-                courseId: true,
-              },
-            },
-          },
-        },
-      },
+      include: this.getSubmissionInclude(),
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async getSubmissionById(id: number) {
+  private async fetchSubmissionById(id: number) {
     return this.prisma.submission.findUnique({
       where: { id },
-      include: {
-        courseProblem: {
-          include: {
-            problem: {
-              select: {
-                id: true,
-                title: true,
-              },
-            },
-            course: {
-              select: {
-                id: true,
-                name: true,
-                courseId: true,
-              },
-            },
-          },
+      include: this.getSubmissionInclude(),
+    });
+  }
+
+  private getSubmissionInclude() {
+    return {
+      courseProblem: {
+        include: {
+          problem: { select: { id: true, title: true } },
+          course: { select: { id: true, name: true, courseId: true } },
         },
       },
-    });
+    };
+  }
+
+  private mapSubmissionToDto(submission: any): GetSubmissionDto {
+    return {
+      id: submission.id,
+      userId: submission.userId,
+      courseProblemId: submission.courseProblemId,
+      code: submission.code,
+      status: submission.status,
+      score: submission.score,
+      detail: submission.detail,
+      createdAt: submission.createdAt,
+    };
   }
 }

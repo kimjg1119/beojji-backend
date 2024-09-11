@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { EnrollDto } from './dto/enroll.dto';
+import { GetCourseDto } from './dto/get-course.dto';
 
 @Injectable()
 export class CourseService {
@@ -21,24 +22,27 @@ export class CourseService {
     });
   }
 
-  async getOne(id: number): Promise<Course> {
+  async getOne(id: number): Promise<GetCourseDto> {
     const course = await this.prisma.course.findUnique({
       where: { id },
-      include: {
-        courseProblem: {
-          include: {
-            problem: true,
-          },
-        },
-        user: true,
-      },
     });
 
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
 
-    return course;
+    return this.mapCourseToDto(course);
+  }
+
+  private mapCourseToDto(course: Course): GetCourseDto {
+    return {
+      id: course.id,
+      courseId: course.courseId,
+      name: course.name,
+      term: course.term,
+      description: course.description,
+      link: course.link,
+    };
   }
 
   async create(params: { data: CreateCourseDto }): Promise<Course> {

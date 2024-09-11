@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, Logger, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, Logger, Get, UseGuards, Req, Param } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -7,6 +7,8 @@ import { GetProfileDto } from './dto/get-profile.dto';
 import { RoleGuard } from 'src/auth/role.guard';
 import { Role } from 'src/auth/roles.decorator';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { GetUserDto } from './dto/get-user.dto';
+import { SelfActionGuard } from 'src/auth/self-action.guard';
 
 @Controller('api/user')
 @ApiTags('Users')
@@ -18,10 +20,21 @@ export class UserController {
   @Role('admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({ status: 200, description: 'Returns all users' })
+  @ApiResponse({ status: 200, description: 'Returns all users', type: [GetUserDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
   async getAllUser() {
     return this.usersService.getAllUser();
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, SelfActionGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a user by ID' })
+  @ApiResponse({ status: 200, description: 'Returns the user', type: GetUserDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
+  @ApiResponse({ status: 403, description: 'Forbidden - User does not have admin role' })
+  async getUserById(@Param('id') id: number) {
+    return this.usersService.getUserbyId(id);
   }
 
   @Post()

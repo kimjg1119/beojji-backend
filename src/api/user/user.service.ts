@@ -29,7 +29,7 @@ export class UserService {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  async getbyId(id: number) {
+  async getUserbyId(id: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: id },
       select: { id: true, email: true, studentId: true, role: true, username: true }
@@ -73,7 +73,7 @@ export class UserService {
   }
 
   async getProfile(userId: number): Promise<GetProfileDto> {
-    const user = await this.getbyId(userId);
+    const user = await this.getUserbyId(userId);
     return {
       id: user.id,
       email: user.email,

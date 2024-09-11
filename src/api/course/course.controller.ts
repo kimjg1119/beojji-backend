@@ -8,6 +8,7 @@ import { Role } from 'src/auth/roles.decorator';
 import { RoleGuard } from 'src/auth/role.guard';
 import { RequestWithUser } from 'src/auth/requests';
 import { SelfActionGuard } from 'src/auth/self-action.guard';
+import { GetCourseDto } from './dto/get-course.dto';
 
 @ApiTags('Course')
 @Controller('api/course')
@@ -17,9 +18,9 @@ export class CourseController {
 
   @Get()
   @ApiOperation({ summary: 'Get all courses', description: 'Retrieves a list of all available courses.' })
-  @ApiResponse({ status: 200, description: 'Returns all courses', type: [CreateCourseDto] })
+  @ApiResponse({ status: 200, description: 'Returns all courses', type: [GetCourseDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getAll() {
+  async getAll(): Promise<GetCourseDto[]> {
     return this.courseService.getAll();
   }
   
@@ -27,19 +28,19 @@ export class CourseController {
   @UseGuards(JwtAuthGuard, SelfActionGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the courses of the authenticated user' })
-  @ApiResponse({ status: 200, description: 'Returns the user courses' })
+  @ApiResponse({ status: 200, description: 'Returns the user courses', type: [GetCourseDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
-  async getUserCourse(@Req() req: RequestWithUser) {
+  async getUserCourse(@Req() req: RequestWithUser): Promise<GetCourseDto[]> {
     return this.courseService.getUserCourse(req.user.id);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a course by ID', description: 'Retrieves a specific course by its ID.' })
-  @ApiParam({ name: 'id', type: 'number', description: 'The ID of the course to retrieve' })
-  @ApiResponse({ status: 200, description: 'Returns the course', type: CreateCourseDto })
+  @ApiOperation({ summary: 'Get a course by ID' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Course ID' })
+  @ApiResponse({ status: 200, description: 'The course has been successfully retrieved', type: GetCourseDto })
   @ApiResponse({ status: 404, description: 'Course not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findOne(@Param('id') id: string) {
+  getCourse(@Param('id') id: string): Promise<GetCourseDto> {
     return this.courseService.getOne(+id);
   }
 
@@ -52,7 +53,7 @@ export class CourseController {
     type: CreateCourseDto,
     description: 'The course details to create',
     examples: {
-      example1: {
+      COSE101: {
         value: {
           courseId: "COSE101",
           name: "Introduction to Computer Science",
@@ -61,7 +62,7 @@ export class CourseController {
           link: "https://example.com/intro-cs"
         }
       },
-      example2: {
+      MATH201: {
         value: {
           courseId: "MATH201",
           name: "Linear Algebra",
@@ -95,6 +96,4 @@ export class CourseController {
   enroll(@Body() enrollDto: EnrollDto) {
     return this.courseService.enroll(enrollDto);
   }
-
-
 }

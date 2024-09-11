@@ -19,6 +19,20 @@ export class LoginController {
         password: { type: 'string', example: 'password' },
       },
     },
+    examples: {
+      user: {
+        value: {
+          email: 'user@example.com',
+          password: 'password',
+        },
+      },
+      admin: {
+        value: {
+          email: 'admin@example.com',
+          password: 'password',
+        },
+      },
+    },
     description: 'User credentials',
   })
   async login(@Body() loginDto: { email: string; password: string }): Promise<{ access_token: string }> {

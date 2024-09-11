@@ -25,9 +25,6 @@ export class UserController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Role('admin')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })

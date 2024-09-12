@@ -12,6 +12,7 @@ import { SelfActionGuard } from './auth/self-action.guard';
 import { LoginModule } from './api/login/login.module';
 import { CourseModule } from './api/course/course.module';
 import { SubmissionModule } from './api/submission/submission.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -23,6 +24,15 @@ import { SubmissionModule } from './api/submission/submission.module';
     ProblemModule,
     SubmissionModule,
     UserModule,
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
+    BullModule.registerQueue({
+      name: 'grader',
+    }),
   ],
   controllers: [AppController],
   providers: [

@@ -1,41 +1,27 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { downloadTemplate, grade } from './grade';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Queue, Job } from 'bull';
 
 @Injectable()
-export class GraderQueue implements OnModuleInit {
-  private queue: number[] = [];
-  private isProcessing: boolean = false;
+@Processor('grader')
+export class GraderQueue {
   private readonly logger = new Logger(GraderQueue.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @InjectQueue('grader') private graderQueue: Queue
+  ) {}
 
-  onModuleInit() {
-    this.startProcessingLoop();
+  async addToQueue(submissionId: number) {
+    await this.graderQueue.add('grade', { submissionId });
   }
 
-  addToQueue(submissionId: number) {
-    this.queue.push(submissionId);
-  }
-
-  private async startProcessingLoop() {
-    while (true) {
-      if (this.queue.length > 0 && !this.isProcessing) {
-        await this.processQueue();
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-  }
-
-  private async processQueue() {
-    this.isProcessing = true;
-
-    while (this.queue.length > 0) {
-      const submissionId = this.queue.shift();
-      await this.gradeSubmission(submissionId);
-    }
-
-    this.isProcessing = false;
+  @Process('grade')
+  private async processJob(job: Job<{ submissionId: number }>) {
+    const { submissionId } = job.data;
+    await this.gradeSubmission(submissionId);
   }
 
   private async gradeSubmission(submissionId: number) {
@@ -58,7 +44,7 @@ export class GraderQueue implements OnModuleInit {
       }
 
       this.logger.log(`Grading submission ${submissionId}: ${submission.courseProblem.problem.package}`);
-      downloadTemplate(submission.courseProblem.problem.package);
+    //   downloadTemplate(submission.courseProblem.problem.package);
       const result = grade(submission.courseProblem.problem.package, submission.code);
 
       await this.prisma.submission.update({

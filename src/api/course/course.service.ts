@@ -3,15 +3,15 @@ import { Prisma, Course } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateCourseDto } from './dto/create-course.dto';
-import { EnrollDto } from './dto/enroll.dto';
 import { GetCourseDto } from './dto/get-course.dto';
+import { EnrollDto } from './dto/enroll.dto';
 
 @Injectable()
 export class CourseService {
   constructor(private prisma: PrismaService) {}
 
-  async getAll(): Promise<Course[]> {
-    return this.prisma.course.findMany({
+  async getAll(): Promise<GetCourseDto[]> {
+    const courses = await this.prisma.course.findMany({
       include: {
         courseProblem: {
           include: {
@@ -20,11 +20,20 @@ export class CourseService {
         },
       },
     });
+
+    return courses.map(this.mapCourseToDto);
   }
 
   async getOne(id: number): Promise<GetCourseDto> {
     const course = await this.prisma.course.findUnique({
       where: { id },
+      include: {
+        courseProblem: {
+          include: {
+            problem: true,
+          },
+        },
+      },
     });
 
     if (!course) {
@@ -34,7 +43,7 @@ export class CourseService {
     return this.mapCourseToDto(course);
   }
 
-  private mapCourseToDto(course: Course): GetCourseDto {
+  private mapCourseToDto(course: any): GetCourseDto {
     return {
       id: course.id,
       courseId: course.courseId,
@@ -42,6 +51,13 @@ export class CourseService {
       term: course.term,
       description: course.description,
       link: course.link,
+      problems: course.courseProblem.map(cp => ({
+        id: cp.problem.id,
+        title: cp.problem.title,
+        description: cp.problem.description,
+        link: cp.problem.link,
+        dueDate: cp.dueDate.toISOString(),
+      })),
     };
   }
 
@@ -92,26 +108,17 @@ export class CourseService {
     });
   }
 
-  async getUserCourse(userId: number) {
+  async getUserCourse(userId: number): Promise<GetCourseDto[]> {
     const userWithCourses = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         course: {
           include: {
             courseProblem: {
-              select: {
-                id: true,
-                dueDate: true,
-                problem: {
-                  select: {
-                    id: true,
-                    title: true,
-                    description: true,
-                    link: true
-                  }
-                },
-              }
-            }
+              include: {
+                problem: true,
+              },
+            },
           }
         }
       }
@@ -121,6 +128,6 @@ export class CourseService {
       throw new NotFoundException('User not found');
     }
 
-    return userWithCourses.course;
+    return userWithCourses.course.map(this.mapCourseToDto);
   }
 }

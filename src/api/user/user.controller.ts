@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, Logger, Get, UseGuards, Req, Param } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, Logger, Get, UseGuards, Req, Param, ParseIntPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -26,6 +26,16 @@ export class UserController {
     return this.usersService.getAllUser();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get the profile of the authenticated user' })
+  @ApiResponse({ status: 200, description: 'Returns the user profile' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
+  async getProfile(@Req() req: RequestWithUser): Promise<GetProfileDto> {
+    return this.usersService.getProfile(req.user.id);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard, SelfActionGuard)
   @ApiBearerAuth()
@@ -33,7 +43,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Returns the user', type: GetUserDto })
   @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
   @ApiResponse({ status: 403, description: 'Forbidden - User does not have admin role' })
-  async getUserById(@Param('id') id: number) {
+  async getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.getUserbyId(id);
   }
 
@@ -46,13 +56,5 @@ export class UserController {
     return this.usersService.createUser(createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get the profile of the authenticated user' })
-  @ApiResponse({ status: 200, description: 'Returns the user profile' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - User is not authenticated' })
-  async getProfile(@Req() req: RequestWithUser): Promise<GetProfileDto> {
-    return this.usersService.getProfile(req.user.id);
-  }
+
 }

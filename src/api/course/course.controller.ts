@@ -1,13 +1,13 @@
-import { Controller, Get, Post, Body, Param, UseGuards, UsePipes, ValidationPipe, Req } from '@nestjs/common';
-import { CourseService } from './course.service';
+import { Body, Controller, Get, Param, Post, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RequestWithUser } from 'src/auth/requests';
+import { RoleGuard } from 'src/auth/role.guard';
+import { Role } from 'src/auth/roles.decorator';
+import { SelfActionGuard } from 'src/auth/self-action.guard';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CourseService } from './course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { EnrollDto } from './dto/enroll.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
-import { Role } from 'src/auth/roles.decorator';
-import { RoleGuard } from 'src/auth/role.guard';
-import { RequestWithUser } from 'src/auth/requests';
-import { SelfActionGuard } from 'src/auth/self-action.guard';
 import { GetCourseDto } from './dto/get-course.dto';
 
 @ApiTags('Course')

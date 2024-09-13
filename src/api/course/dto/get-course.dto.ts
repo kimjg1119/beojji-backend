@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
+import { GetProblemDto } from 'src/api/problem/dto/get-problem.dto';
 
 export class GetCourseDto {
   @ApiProperty({ description: 'The unique identifier of the course' })
@@ -29,4 +31,9 @@ export class GetCourseDto {
   @IsString()
   @IsOptional()
   link?: string;
+
+  @ApiProperty({ description: 'The problems associated with the course', type: [GetProblemDto] })
+  @IsArray()
+  @Type(() => GetProblemDto)
+  problems: GetProblemDto[];
 }
